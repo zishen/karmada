@@ -367,6 +367,8 @@ func (c *ClusterStatusController) initLeaseController(cluster *clusterv1alpha1.C
 	ctx, cancelFunc := context.WithCancel(context.TODO())
 	c.ClusterLeaseControllers.Store(cluster.Name, cancelFunc)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	// start syncing lease
 	go func() {
 		klog.Infof("Starting syncing lease for cluster: %s", cluster.Name)
@@ -376,7 +378,9 @@ func (c *ClusterStatusController) initLeaseController(cluster *clusterv1alpha1.C
 
 		klog.Infof("Stop syncing lease for cluster: %s", cluster.Name)
 		c.ClusterLeaseControllers.Delete(cluster.Name) // ensure the cache is clean
+		wg.Done()
 	}()
+	wg.Wait()
 }
 
 func getClusterHealthStatus(clusterClient *util.ClusterClient) (online, healthy bool) {
