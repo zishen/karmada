@@ -111,12 +111,23 @@ func ClusterMatches(cluster *clusterv1alpha1.Cluster, affinity policyv1alpha1.Cl
 			return false
 		}
 		clusterFields := extractClusterFields(cluster)
-		if matchFields != nil && !matchFields.Matches(clusterFields) {
+		if matchFields != nil && !extractClusterFieldsMatches(matchFields, clusterFields) {
 			return false
 		}
 	}
 
 	return ClusterNamesMatches(cluster, affinity.ClusterNames)
+}
+
+func extractClusterFieldsMatches(matchFields labels.Selector, clusterFields map[string][]string) bool {
+	for filed, values := range clusterFields {
+		for _, value := range values {
+			if !matchFields.Matches(labels.Set{filed: value}) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // ClusterNamesMatches tells if specific cluster matches the clusterNames affinity.
@@ -154,19 +165,19 @@ func ResourceMatchSelectorsPriority(resource *unstructured.Unstructured, selecto
 	return priority
 }
 
-func extractClusterFields(cluster *clusterv1alpha1.Cluster) labels.Set {
-	clusterFieldsMap := make(labels.Set)
+func extractClusterFields(cluster *clusterv1alpha1.Cluster) map[string][]string {
+	clusterFieldsMap := make(map[string][]string)
 
 	if cluster.Spec.Provider != "" {
-		clusterFieldsMap[ProviderField] = cluster.Spec.Provider
+		clusterFieldsMap[ProviderField] = []string{cluster.Spec.Provider}
 	}
 
 	if cluster.Spec.Region != "" {
-		clusterFieldsMap[RegionField] = cluster.Spec.Region
+		clusterFieldsMap[RegionField] = []string{cluster.Spec.Region}
 	}
 
-	if cluster.Spec.Zone != "" {
-		clusterFieldsMap[ZoneField] = cluster.Spec.Zone
+	if len(cluster.Spec.Zones) != 0 {
+		clusterFieldsMap[ZoneField] = cluster.Spec.Zones
 	}
 
 	return clusterFieldsMap

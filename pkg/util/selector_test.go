@@ -4,13 +4,11 @@ import (
 	"reflect"
 	"testing"
 
+	clusterv1alpha1 "github.com/karmada-io/karmada/pkg/apis/cluster/v1alpha1"
+	policyv1alpha1 "github.com/karmada-io/karmada/pkg/apis/policy/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
-
-	clusterv1alpha1 "github.com/karmada-io/karmada/pkg/apis/cluster/v1alpha1"
-	policyv1alpha1 "github.com/karmada-io/karmada/pkg/apis/policy/v1alpha1"
 )
 
 func TestResourceMatches(t *testing.T) {
@@ -914,14 +912,14 @@ func Test_extractClusterFields(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want labels.Set
+		want map[string][]string
 	}{
 		{
 			name: "empty",
 			args: args{
 				cluster: &clusterv1alpha1.Cluster{},
 			},
-			want: labels.Set{},
+			want: map[string][]string{},
 		},
 		{
 			name: "provider is set",
@@ -932,8 +930,8 @@ func Test_extractClusterFields(t *testing.T) {
 					},
 				},
 			},
-			want: labels.Set{
-				ProviderField: "foo",
+			want: map[string][]string{
+				ProviderField: []string{"foo"},
 			},
 		},
 		{
@@ -945,8 +943,8 @@ func Test_extractClusterFields(t *testing.T) {
 					},
 				},
 			},
-			want: labels.Set{
-				RegionField: "foo",
+			want: map[string][]string{
+				RegionField: {"foo"},
 			},
 		},
 		{
@@ -954,12 +952,12 @@ func Test_extractClusterFields(t *testing.T) {
 			args: args{
 				cluster: &clusterv1alpha1.Cluster{
 					Spec: clusterv1alpha1.ClusterSpec{
-						Zone: "foo",
+						Zones: []string{"foo"},
 					},
 				},
 			},
-			want: labels.Set{
-				ZoneField: "foo",
+			want: map[string][]string{
+				ZoneField: {"foo"},
 			},
 		},
 		{
@@ -969,14 +967,14 @@ func Test_extractClusterFields(t *testing.T) {
 					Spec: clusterv1alpha1.ClusterSpec{
 						Provider: "foo",
 						Region:   "bar",
-						Zone:     "baz",
+						Zones:     []string{"baz"},
 					},
 				},
 			},
-			want: labels.Set{
-				ProviderField: "foo",
-				RegionField:   "bar",
-				ZoneField:     "baz",
+			want: map[string][]string{
+				ProviderField: {"foo"},
+				RegionField:   {"bar"},
+				ZoneField:     {"baz"},
 			},
 		},
 	}
